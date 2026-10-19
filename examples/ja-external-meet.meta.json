@@ -1,0 +1,12 @@
+{
+  "meeting_type": "external",
+  "me": "佐藤",
+  "facilitator": "me",
+  "relationships": {"田中": "external"},
+  "scheduled_minutes": 30,
+  "actual_minutes": null,
+  "date": "2026-10-01",
+  "goal": "試験導入の日程を決める",
+  "counterpart_reserved": false,
+  "language": "ja"
+}

@@ -1,0 +1,249 @@
+{
+ "criteria": [
+  {
+   "id": "purpose_shared",
+   "track": "meeting",
+   "level": 3,
+   "evidence": [
+    {
+     "i": 4,
+     "quote": "ご提案の機会をいただきました"
+    }
+   ],
+   "reason": "提案の趣旨は伝えたが、この場で何を決めるかは共有していない"
+  },
+  {
+   "id": "discussion_focus",
+   "track": "meeting",
+   "level": 3,
+   "evidence": [
+    {
+     "i": 6,
+     "quote": "料金プランは三つありまして"
+    }
+   ],
+   "reason": "説明が続き、相手の課題に焦点が移らなかった"
+  },
+  {
+   "id": "decisions_clear",
+   "track": "meeting",
+   "level": 2,
+   "evidence": [
+    {
+     "i": 14,
+     "quote": "前向きに検討します"
+    }
+   ],
+   "reason": "担当も期日も決まらないまま終わった"
+  },
+  {
+   "id": "participation_balance",
+   "track": "meeting",
+   "level": 2,
+   "evidence": [
+    {
+     "absence": "相手から言い換えや質問が無い",
+     "range": [
+      2,
+      9
+     ]
+    }
+   ],
+   "reason": "約35分のあいだ相手の発言は相槌だけだった"
+  },
+  {
+   "id": "goal_achieved",
+   "track": "meeting",
+   "level": 2,
+   "evidence": [
+    {
+     "i": 14,
+     "quote": "前向きに検討します"
+    }
+   ],
+   "reason": "試験導入の日程は決まらなかった"
+  },
+  {
+   "id": "conclusion_first",
+   "track": "self",
+   "level": 3,
+   "evidence": [
+    {
+     "i": 2,
+     "quote": "まず弊社の背景からご説明させてください"
+    }
+   ],
+   "reason": "提案の結論より会社の背景から入った"
+  },
+  {
+   "id": "discovery",
+   "track": "self",
+   "level": 2,
+   "evidence": [
+    {
+     "i": 10,
+     "quote": "何か気になる点はありますか?"
+    }
+   ],
+   "reason": "課題を聞いたのは終盤の1回だけ"
+  },
+  {
+   "id": "understanding_check",
+   "track": "self",
+   "level": 2,
+   "evidence": [
+    {
+     "absence": "相手から言い換えや質問が無い",
+     "range": [
+      2,
+      9
+     ]
+    }
+   ],
+   "reason": "長い説明のあと、伝わったかを一度も確かめていない"
+  },
+  {
+   "id": "reaction_handling",
+   "track": "self",
+   "level": 2,
+   "evidence": [
+    {
+     "i": 12,
+     "quote": "そこは大丈夫です"
+    }
+   ],
+   "reason": "切り替えの不安を深掘りせずに打ち消した"
+  },
+  {
+   "id": "next_meeting_secured",
+   "track": "self",
+   "level": 1,
+   "evidence": [
+    {
+     "i": 15,
+     "quote": "引き続きよろしくお願いします"
+    }
+   ],
+   "reason": "次回の日程を取らずに締めた"
+  }
+ ],
+ "signals": [
+  {
+   "type": "thin_response",
+   "i": 3,
+   "quote": "はい。",
+   "verdict": "risk",
+   "reason": "6分近い説明への返事が相槌だけ"
+  },
+  {
+   "type": "hedge_unresolved",
+   "i": 14,
+   "quote": "前向きに検討します",
+   "verdict": "risk",
+   "reason": "担当も期日も付かないまま終わった"
+  },
+  {
+   "type": "vague_closing",
+   "i": 15,
+   "quote": "引き続きよろしくお願いします",
+   "verdict": "risk",
+   "reason": "次の約束が無い締め"
+  },
+  {
+   "type": "no_counterpart_questions",
+   "absence": "提案のあと相手からの質問が無い",
+   "range": [
+    4,
+    9
+   ],
+   "verdict": "risk",
+   "reason": "料金と事例の説明のあいだ、相手は一度も質問していない"
+  }
+ ],
+ "strengths": [
+  {
+   "text": "導入の流れを一拠点・一か月と具体的に示せた",
+   "evidence": [
+    {
+     "i": 4,
+     "quote": "まず一つの拠点で一か月ほど試していただいて"
+    }
+   ]
+  }
+ ],
+ "improvements": [
+  {
+   "criterion": "decisions_clear",
+   "what_happened": "「前向きに検討します」で終わった",
+   "evidence": [
+    {
+     "i": 14,
+     "quote": "前向きに検討します"
+    }
+   ],
+   "try_instead": "「いつ頃までにお返事をいただけそうですか」と期日を一緒に決める"
+  },
+  {
+   "criterion": "discovery",
+   "what_happened": "課題を聞いたのは終盤の1回だけ",
+   "evidence": [
+    {
+     "i": 10,
+     "quote": "何か気になる点はありますか?"
+    }
+   ],
+   "try_instead": "説明の前に「今いちばん手間がかかっている作業は何ですか」と聞く"
+  },
+  {
+   "criterion": "next_meeting_secured",
+   "what_happened": "次回の日程を取らずに締めた",
+   "evidence": [
+    {
+     "i": 15,
+     "quote": "引き続きよろしくお願いします"
+    }
+   ],
+   "try_instead": "締めの前に、次に話す日をその場で押さえる"
+  },
+  {
+   "criterion": "reaction_handling",
+   "what_happened": "不安をすぐ打ち消した",
+   "evidence": [
+    {
+     "i": 12,
+     "quote": "そこは大丈夫です"
+    }
+   ],
+   "try_instead": "「どのあたりが一番気になりますか」と一段深く聞く"
+  },
+  {
+   "criterion": "understanding_check",
+   "what_happened": "長い説明のあと確認しなかった",
+   "evidence": [
+    {
+     "absence": "理解の確認が無い",
+     "range": [
+      2,
+      9
+     ]
+    }
+   ],
+   "try_instead": "3分ごとに「ここまででご不明な点はありますか」と区切る"
+  }
+ ],
+ "next_actions": [
+  {
+   "text": "説明に入る前に、相手のいちばんの手間を1つ聞く"
+  },
+  {
+   "text": "「検討します」と言われたら、返事の期日をその場で決める"
+  },
+  {
+   "text": "締めの前に次回の日程を押さえる"
+  }
+ ],
+ "habits": [],
+ "worked": [],
+ "previous_actions_check": [],
+ "plan_check": []
+}

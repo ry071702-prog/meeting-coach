@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>meeting-coach</title>
+  <meta name="description" content="Prepare for a meeting, then review it with scores out of 100 and quoted evidence. Runs in your browser with your own API key for Claude, OpenAI or Gemini.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; connect-src 'self' https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data:; style-src 'self'; font-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b5f63'/%3E%3Cpath d='M8 21l5-6 4 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>meeting-coach</h1>
+      <p data-t="tagline"></p>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="prepare" data-t="tab_prepare" aria-selected="true"></button>
+      <button role="tab" data-tab="review" data-t="tab_review"></button>
+      <button role="tab" data-tab="history" data-t="tab_history"></button>
+      <button role="tab" data-tab="settings" data-t="tab_settings"></button>
+    </nav>
+  </header>
+
+  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <div id="ai-banner" class="ai-notes" hidden></div>
+
+  <main>
+    <section id="prepare" class="panel" role="tabpanel">
+      <form id="prep-form" class="form">
+        <div class="row">
+          <label><span data-t="p_name"></span><input name="name" required autocomplete="off"></label>
+          <label><span data-t="p_org"></span><input name="org" autocomplete="off"></label>
+        </div>
+        <label><span data-t="p_urls"></span><textarea name="urls" rows="2" spellcheck="false"></textarea></label>
+        <label><span data-t="p_profile"></span><textarea name="profile" rows="3"></textarea></label>
+        <div class="row">
+          <label><span data-t="p_kind"></span>
+            <select name="kind">
+              <option value="senior" data-t="kind_senior"></option>
+              <option value="report" data-t="kind_report"></option>
+              <option value="candidate" data-t="kind_candidate"></option>
+              <option value="peer" data-t="kind_peer"></option>
+              <option value="external" data-t="kind_external"></option>
+              <option value="meeting" data-t="kind_meeting"></option>
+            </select>
+          </label>
+          <label class="stage-field" hidden><span data-t="p_stage"></span>
+            <select name="stage">
+              <option value="discovery" data-t="stage_discovery"></option>
+              <option value="proposal" data-t="stage_proposal"></option>
+            </select>
+          </label>
+        </div>
+        <label><span data-t="p_goal"></span><input name="goal" required></label>
+        <label><span data-t="p_unsure"></span><input name="unsure"></label>
+        <div class="row">
+          <label><span data-t="p_minutes"></span><input name="minutes" type="number" min="5" max="600" value="30"></label>
+          <label><span data-t="p_date"></span><input name="date" type="date" required></label>
+        </div>
+        <label><span data-t="p_notes"></span><textarea name="notes" rows="4"></textarea></label>
+        <button class="primary" type="submit" data-t="p_run"></button>
+      </form>
+      <article id="prep-out" class="output" hidden></article>
+    </section>
+
+    <section id="review" class="panel" role="tabpanel" hidden>
+      <form id="load-form" class="form">
+        <label><span data-t="r_file"></span><input name="file" type="file" accept=".txt,.vtt,.md,text/plain"></label>
+        <label><span data-t="r_paste"></span><textarea name="paste" rows="5" spellcheck="false"></textarea></label>
+        <button type="submit" data-t="r_load"></button>
+      </form>
+      <div id="load-info" class="info" hidden></div>
+      <form id="assign-form" class="form" hidden>
+        <p data-t="r_nospeaker"></p>
+        <label><span data-t="r_names"></span><input name="names" required></label>
+        <button type="submit" data-t="r_assign"></button>
+      </form>
+      <form id="intake-form" class="form" hidden></form>
+      <article id="review-out" class="output" hidden></article>
+    </section>
+
+    <section id="history" class="panel" role="tabpanel" hidden>
+      <h2 data-t="h_scores"></h2>
+      <div id="score-table"></div>
+      <h2 data-t="h_learn"></h2>
+      <article id="learn-md" class="output"></article>
+      <div class="actions">
+        <button id="export" type="button" data-t="h_export"></button>
+        <button id="backup" type="button" data-t="h_backup"></button>
+        <label class="filebtn"><span data-t="h_restore"></span><input id="restore" type="file" accept=".json,application/json"></label>
+      </div>
+      <form id="import-form" class="form">
+        <label><span data-t="h_import"></span><textarea name="block" rows="4" spellcheck="false"></textarea></label>
+        <button type="submit" data-t="h_import"></button>
+      </form>
+      <button id="wipe" class="danger" type="button" data-t="h_wipe"></button>
+    </section>
+
+    <section id="settings" class="panel" role="tabpanel" hidden>
+      <form id="settings-form" class="form">
+        <label><span data-t="s_ai"></span><select name="provider"></select></label>
+        <div id="s-notes" class="ai-notes inline" hidden></div>
+        <label><span id="s-key-label"></span><input name="key" type="password" autocomplete="off" spellcheck="false"><small><a id="key-link" target="_blank" rel="noopener noreferrer" data-t="s_key_get"></a></small></label>
+        <label class="check"><input name="remember" type="checkbox"><span data-t="s_remember"></span></label>
+        <div class="row">
+          <label><span data-t="s_model"></span><select name="model"></select></label>
+          <label class="model-custom" hidden><span data-t="s_model_name"></span><input name="model_custom" autocomplete="off" spellcheck="false"></label>
+          <label><span data-t="s_lang"></span>
+            <select name="lang"><option value="ja">日本語</option><option value="en">English</option></select>
+          </label>
+        </div>
+        <label><span data-t="s_org"></span><textarea name="org" rows="6" spellcheck="false"></textarea><small data-t="s_org_hint"></small></label>
+        <button class="primary" type="submit" data-t="s_save"></button>
+      </form>
+      <h2 data-t="privacy_title"></h2>
+      <p class="note" data-t="privacy"></p>
+      <p class="note"><a href="https://github.com/ry071702-prog/meeting-coach">GitHub</a></p>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

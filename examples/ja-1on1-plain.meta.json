@@ -1,0 +1,13 @@
+{
+  "meeting_type": "one-on-one",
+  "my_position": "report",
+  "me": "佐藤",
+  "facilitator": "山本",
+  "relationships": {"山本": "manager"},
+  "scheduled_minutes": 30,
+  "actual_minutes": null,
+  "date": "2026-10-02",
+  "goal": "イベント予算の増額を判断してもらう",
+  "counterpart_reserved": false,
+  "language": "ja"
+}

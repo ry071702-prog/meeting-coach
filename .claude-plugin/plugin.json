@@ -1,0 +1,9 @@
+{
+  "name": "meeting-coach",
+  "displayName": "Meeting Coach",
+  "version": "0.1.0",
+  "description": "Prepare for a meeting and review it afterwards as one loop: public-source research and questions before, two scores out of 100 with quoted evidence after.",
+  "author": {"name": "ry071702-prog"},
+  "license": "MIT",
+  "repository": "https://github.com/ry071702-prog/meeting-coach"
+}

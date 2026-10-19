@@ -1,0 +1,28 @@
+{
+  "skill_base": "../skills/meeting-coach/",
+  "files": [
+    "SKILL.md",
+    "config.default.json",
+    "references/locales/en.md",
+    "references/locales/ja.md",
+    "references/prepare/plan-template.md",
+    "references/prepare/question-guide.md",
+    "references/prepare/research.md",
+    "references/report-template.md",
+    "references/rubrics/criteria.md",
+    "references/rubrics/external.md",
+    "references/rubrics/meeting.md",
+    "references/rubrics/one-on-one.md",
+    "scripts/assign_speakers.py",
+    "scripts/common.py",
+    "scripts/fetch_profile.py",
+    "scripts/learnings.py",
+    "scripts/locales/en.json",
+    "scripts/locales/ja.json",
+    "scripts/metrics.py",
+    "scripts/parse_transcript.py",
+    "scripts/score.py",
+    "scripts/transcribe.py",
+    "scripts/verify_evidence.py"
+  ]
+}

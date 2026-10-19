@@ -1,0 +1,12 @@
+{
+  "meeting_type": "meeting",
+  "me": "Alex",
+  "facilitator": "me",
+  "relationships": {"Jordan": "peer", "Sam": "peer"},
+  "scheduled_minutes": 30,
+  "actual_minutes": null,
+  "date": "2026-10-03",
+  "goal": "Decide the Q4 vendor",
+  "counterpart_reserved": false,
+  "language": "en"
+}

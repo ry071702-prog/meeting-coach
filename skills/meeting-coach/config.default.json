@@ -1,0 +1,54 @@
+{
+  "_note": "Every weight, threshold, band and penalty here is a design default, not a research finding. Override any key in <store_dir>/config.json.",
+  "version": 1,
+  "store_dir": "~/.meeting-coach",
+  "redact_names": true,
+  "org_pack": null,
+  "notes_dirs": [],
+  "research_budget": {"person": 6, "company": 5},
+  "long_turn_units": {"ja": 200, "en": 100},
+  "thin_response_units": {"ja": 12, "en": 4},
+  "hedge_followup_window": 4,
+  "closing_window": 80,
+  "silence_after_question_sec": 4,
+  "transcript_gap_sec": 300,
+  "sparse_block_ratio": 0.25,
+  "min_coverage": 0.6,
+  "bands": [
+    {"id": "S", "min": 90},
+    {"id": "A", "min": 75},
+    {"id": "B", "min": 60},
+    {"id": "C", "min": 0}
+  ],
+  "time_penalty": {
+    "tiers": [
+      {"max_overrun": 0.10, "points": 0},
+      {"max_overrun": 0.25, "points": 5},
+      {"max_overrun": 0.50, "points": 10},
+      {"max_overrun": null, "points": 20}
+    ],
+    "apply_to_self_only_when_facilitator": true
+  },
+  "rubrics": {
+    "meeting": {
+      "meeting": {"purpose_shared": 20, "discussion_focus": 20, "decisions_clear": 25, "participation_balance": 15, "goal_achieved": 20},
+      "self": {"conclusion_first": 25, "questioning_listening": 15, "understanding_check": 20, "reaction_handling": 20, "next_action_ownership": 20}
+    },
+    "one-on-one/report": {
+      "meeting": {"purpose_shared": 15, "discussion_focus": 20, "decisions_clear": 25, "participation_balance": 10, "goal_achieved": 30},
+      "self": {"conclusion_first": 20, "agenda_ownership": 20, "expectation_alignment": 15, "understanding_check": 15, "reaction_handling": 15, "next_action_ownership": 15}
+    },
+    "one-on-one/manager": {
+      "meeting": {"purpose_shared": 15, "discussion_focus": 15, "decisions_clear": 20, "participation_balance": 25, "goal_achieved": 25},
+      "self": {"questioning_listening": 25, "psychological_safety": 20, "conclusion_first": 10, "understanding_check": 10, "reaction_handling": 15, "counterpart_ownership": 20}
+    },
+    "one-on-one/peer": {
+      "meeting": {"purpose_shared": 15, "discussion_focus": 20, "decisions_clear": 25, "participation_balance": 10, "goal_achieved": 30},
+      "self": {"conclusion_first": 20, "questioning_listening": 20, "understanding_check": 20, "reaction_handling": 20, "next_action_ownership": 20}
+    },
+    "external": {
+      "meeting": {"purpose_shared": 15, "discussion_focus": 15, "decisions_clear": 25, "participation_balance": 15, "goal_achieved": 30},
+      "self": {"conclusion_first": 15, "discovery": 25, "understanding_check": 15, "reaction_handling": 20, "next_meeting_secured": 25}
+    }
+  }
+}

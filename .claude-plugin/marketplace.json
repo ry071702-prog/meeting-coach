@@ -1,0 +1,14 @@
+{
+  "name": "meeting-coach",
+  "description": "meeting-coach: prepare for meetings and review them with scores out of 100 and quoted evidence.",
+  "owner": {
+    "name": "ry071702-prog"
+  },
+  "plugins": [
+    {
+      "name": "meeting-coach",
+      "source": "./",
+      "description": "Prepare for and review meetings, with scores out of 100 and quoted evidence."
+    }
+  ]
+}

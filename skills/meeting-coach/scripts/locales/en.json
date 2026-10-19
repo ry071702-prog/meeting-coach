@@ -1,0 +1,63 @@
+{
+  "language": "en",
+  "unit": "words",
+  "backchannels": [
+    "yes", "yeah", "yep", "yup", "right", "okay", "ok", "uh-huh", "uh huh", "mm-hmm", "mhm", "mm", "hmm",
+    "sure", "got it", "i see", "makes sense", "that makes sense", "true", "cool", "great", "nice", "totally",
+    "exactly", "absolutely", "for sure", "oh", "ah", "wow", "interesting", "gotcha", "fair", "fair enough"
+  ],
+  "fillers": ["um", "uh", "er", "erm", "uhm", "you know", "i mean", "kind of", "sort of", "like"],
+  "hedges": [
+    "let me think", "we'll consider", "we will consider", "i'll get back", "we'll get back", "circle back",
+    "not sure", "maybe", "we'll see", "let me check with", "take it back", "run it by", "sounds interesting",
+    "that's interesting", "i'll think about it", "in principle", "should be fine", "probably", "we might", "down the road"
+  ],
+  "deadline_patterns": ["\\bby (monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|tonight|eod|end of (the )?(day|week|month)|next week|\\d)", "\\bnext (week|monday|tuesday|wednesday|thursday|friday|meeting|call)\\b", "\\b(monday|tuesday|wednesday|thursday|friday)\\b", "\\btomorrow\\b", "\\bdeadline\\b", "\\b\\d{1,2}/\\d{1,2}\\b", "\\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \\d{1,2}\\b"],
+  "owner_patterns": ["\\bowner\\b", "\\bi'll\\b", "\\bi will\\b", "\\bwe'll send\\b", "\\bwill send\\b", "\\bwill share\\b", "\\bschedule\\b"],
+  "question_starts": ["what", "why", "how", "when", "where", "who", "which", "do", "does", "did", "can", "could", "would", "will", "is", "are", "should", "have", "has", "shall", "may"],
+  "non_speaker_labels": ["Note", "Notes", "Action items", "Action item", "Agenda", "Summary", "Decision", "Decisions", "Next steps", "Attendees", "Date", "Time", "Location", "Re", "Subject", "TODO", "URL", "PS", "P.S."],
+  "stock_phrases": ["let me think", "i'll check", "i will check", "sounds good", "not sure", "maybe later", "let me get back to you", "we'll see", "that's interesting", "makes sense", "got it"],
+  "closing_phrases": ["thanks everyone", "thank you", "talk soon", "see you", "have a good one", "bye"],
+  "asr_hallucinations": ["thanks for watching", "thank you for watching", "please subscribe", "like and subscribe"],
+  "meet_markers": {
+    "transcript_start": "^📖\\s*Transcript",
+    "header": "^Meeting\\s+.*-\\s*Transcript",
+    "end": "(?:Transcription|Meeting) ended after (?P<ts>\\d{1,2}:\\d{2}:\\d{2})",
+    "footer": "^This editable transcript was computer generated"
+  },
+  "labels": {
+    "meeting": "Meeting score",
+    "self": "Your score",
+    "band": "Band",
+    "coverage": "Coverage",
+    "low_confidence": "Indicative only (few criteria could be scored)",
+    "time_penalty": "Time overrun",
+    "speakers_inferred": "Indicative only (speakers inferred from context)",
+    "time_penalty_not_applied": "Time overrun not applied: you were not the facilitator",
+    "level": "Level",
+    "weight": "Weight",
+    "points": "Points",
+    "not_scorable": "Not scorable",
+    "me": "Me",
+    "roles": {"manager": "Manager", "peer": "Peer", "report": "Report", "external": "External", "senior": "Senior", "other": "Other"},
+    "bands": {"S": "Excellent", "A": "Good", "B": "Needs work", "C": "Needs attention"},
+    "criteria": {
+      "purpose_shared": "Purpose shared",
+      "discussion_focus": "Discussion focus",
+      "decisions_clear": "Clear decisions",
+      "participation_balance": "Participation balance",
+      "goal_achieved": "Your goal achieved",
+      "conclusion_first": "Conclusion first",
+      "questioning_listening": "Questioning and listening",
+      "understanding_check": "Checking understanding",
+      "reaction_handling": "Handling weak reactions",
+      "next_action_ownership": "Owning next actions",
+      "agenda_ownership": "Bringing your agenda",
+      "expectation_alignment": "Aligning expectations",
+      "psychological_safety": "Making it safe to speak",
+      "counterpart_ownership": "They own their next step",
+      "discovery": "Discovery",
+      "next_meeting_secured": "Next meeting secured"
+    }
+  }
+}

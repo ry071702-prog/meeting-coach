@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+# real meeting data must never be committed
+private/
+*.local.json
+dist/
+# E2E の作業物
+tests/e2e/node_modules/
+tests/e2e/shots/
+tests/e2e/results.json
+tests/e2e/package-lock.json
