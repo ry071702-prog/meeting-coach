@@ -92,7 +92,7 @@ An org pack is a Markdown file that tells the skill where your organisation publ
 ## Develop
 ```bash
 python3 -m unittest discover tests
-node --test 'tests/providers/*.test.mjs'   # the web app's AI providers (Node 22+)
+node --test 'tests/providers/*.test.mjs'   # the web app's AI providers (Node 22.15+)
 bash tests/e2e/run.sh                      # the web app end to end, AI APIs mocked (needs Docker)
 ```
 Fictional example transcripts live in `examples/`. Never add real meetings to this repo.

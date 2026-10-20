@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 import { start } from "./server.mjs";
-import { respond } from "./mock.mjs";
+import { CITED, LISTED, respond } from "./mock.mjs";
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const REPO = process.env.REPO || "/repo";
@@ -57,7 +57,7 @@ async function newSession(browser, lang, ai) {
       if (provider !== s.ai) s.wrongAI++;
       const body = JSON.parse(req.postData() || "{}");
       const { kind, message } = respond(provider, body, { labelled: s.labelled });
-      s.calls.push({ provider, kind, url: req.url(), model: body.model, store: body.store, tools: body.tools, urlsOnly: /cannot search the web/.test(req.postData() || "") });
+      s.calls.push({ provider, kind, url: req.url(), model: body.model, store: body.store, tools: body.tools, urlsOnly: /cannot search the web/.test(req.postData() || "") && /Do not claim anything you did not read/.test(req.postData() || "") });
       await route.fulfill({ status: 200, headers: { ...CORS, "content-type": "application/json", "request-id": "req_mock" }, body: JSON.stringify(message) });
     });
   }
@@ -286,6 +286,8 @@ const shotList = [];
     check("ja: Gemini には既定のモデルで送られる", urls.length > 0 && urls.every((u) => u.endsWith("/models/gemini-flash-latest:generateContent")), [...new Set(urls)].join(" "));
     const tools = s.calls.filter((c) => c.kind === "prep_plan").map((c) => JSON.stringify(c.tools));
     const told = s.calls.filter((c) => c.kind === "prep_plan").every((c) => c.urlsOnly);
+    const added = await s.page.locator("#prep-out h3", { hasText: "その他の参照ページ" }).count();
+    check("ja: 出典の注釈が無い返事には、その他の参照ページの見出しを足さない", added === 0, `${added} 件`);
     check("ja: Gemini の準備は Google 検索を使わず URL を読むだけ", tools.length === 1 && tools[0] === '[{"urlContext":{}}]' && told, `${tools.join(" ")} 指示=${told}`);
   });
   await finish(s, "ja");
@@ -317,9 +319,91 @@ const shotList = [];
     check("en: OpenAI には既定のモデルで store:false を付けて送られる", s.calls.length > 0 && s.calls.every((c) => c.model === "gpt-6-astra" && c.store === false),
       [...new Set(s.calls.map((c) => `${c.model}/${c.store}`))].join(" "));
     const prep = s.calls.filter((c) => c.kind === "prep_plan");
+    const src = await s.page.evaluate(([url, listed]) => {
+      const out = document.querySelector("#prep-out");
+      const links = [...out.querySelectorAll("a")].filter((a) => a.href === url);
+      const heads = [...out.querySelectorAll("h3")].filter((h) => h.textContent === "Additional sources");
+      return {
+        heads: heads.length, n: links.length, text: links[0]?.textContent, target: links[0]?.target, rel: links[0]?.rel,
+        after: !!(heads[0] && links[0] && heads[0].compareDocumentPosition(links[0]) & Node.DOCUMENT_POSITION_FOLLOWING),
+        listed: [...out.querySelectorAll("a")].filter((a) => a.href.startsWith(listed)).length,
+        own: [...out.querySelectorAll("h3")].filter((h) => h.textContent === "Sources").length,
+      };
+    }, [CITED.url, LISTED.url.split("?")[0]]);
+    check("en: 計画文に無い検索の出典だけが、足した見出しの下に新しいタブで開くリンクで1件ずつ出る",
+      src.heads === 1 && src.n === 1 && src.text === CITED.title.replace(/\s+/g, " ") && src.target === "_blank" && /noopener/.test(src.rel) && src.after, JSON.stringify(src));
+    check("en: 計画文が自分で挙げたページは2回出さず、見出しの Sources も1つのまま", src.listed === 1 && src.own === 1, JSON.stringify(src));
     check("en: OpenAI の準備は Web 検索を使う", prep.length === 1 && prep[0].tools?.some((t) => t.type === "web_search") && !prep[0].urlsOnly, JSON.stringify(prep[0]?.tools));
   });
   await finish(s, "en");
+}
+
+/** host への次の POST を1件だけ止める  arrived で届いたのを待ち、release(返事) で返す (返事なしならモックに回す) */
+async function hold(p, host) {
+  let arrived, release;
+  const reached = new Promise((r) => { arrived = r; });
+  const answer = new Promise((r) => { release = r; });
+  let used = false; // unroute inside a running handler lets the route through twice, so stay and step aside
+  const handler = async (route) => {
+    if (used || route.request().method() !== "POST") return route.fallback();
+    used = true;
+    arrived();
+    const reply = await answer;
+    return reply ? route.fulfill(reply) : route.fallback();
+  };
+  await p.route(host, handler);
+  return { reached, release };
+}
+
+// ---- 実行中に設定で AI を切り替えても、その実行は始めたときの AI とモデルのまま
+{
+  const s = await newSession(browser, "ja", "gemini");
+  await step("実行中の切り替え", async () => {
+    const p = s.page;
+    await openApp(s);
+    await saveSettings(s, "ja", "gemini");
+    const switchToOpenAI = async () => {
+      await p.click('.tabs button[data-tab="settings"]');
+      await p.selectOption(`${F} select[name="provider"]`, "openai");
+      await p.fill(`${F} input[name="key"]`, KEYS.openai);
+      await p.selectOption(`${F} select[name="model"]`, "__other");
+      await p.fill(`${F} input[name="model_custom"]`, "gpt-e2e-mid-run");
+      await p.click(`${F} button[type=submit]`);
+      await p.waitForFunction(() => /保存しました/.test(document.querySelector("#status").textContent));
+    };
+    const start = async () => {
+      await p.click('.tabs button[data-tab="prepare"]');
+      for (const [name, value] of Object.entries({ name: "山本 太郎", org: "サンプル商事", goal: "予算の判断をもらう" })) await p.fill(`#prep-form [name="${name}"]`, value);
+      await p.click("#prep-form button[type=submit]");
+    };
+
+    // 1件目の途中で OpenAI に切り替える → 2件目 (計画からの抽出) も Gemini の既定のモデルに送られる
+    const before = s.calls.length;
+    let h = await hold(p, HOSTS.gemini);
+    await start();
+    await h.reached;
+    await switchToOpenAI();
+    h.release();
+    await waitDone(p);
+    const run = s.calls.slice(before);
+    check("実行中の切り替え: 途中で設定を変えても、その実行は始めた AI とモデルのまま",
+      run.map((c) => c.kind).join(",") === "prep_plan,prep_extract" && run.every((c) => c.provider === "gemini" && c.url.endsWith("/models/gemini-flash-latest:generateContent")),
+      run.map((c) => `${c.provider}:${c.kind}`).join(" "));
+
+    // Gemini に戻して始め、途中で OpenAI に切り替えてから 500 を返す → エラー文は Gemini の名前
+    await saveSettings(s, "ja", "gemini");
+    const errorsBefore = s.errors.length;
+    h = await hold(p, HOSTS.gemini);
+    await start();
+    await h.reached;
+    await switchToOpenAI();
+    h.release({ status: 500, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify({ error: { code: 500, message: "mock outage", status: "INTERNAL" } }) });
+    await p.waitForFunction(() => document.querySelector("#status").classList.contains("error"), null, { timeout: RUN_MS });
+    const text = await p.locator("#status").textContent();
+    check("実行中の切り替え: エラー文は始めたときの AI の名前で出る", /Gemini 側のエラー/.test(text) && !/OpenAI/.test(text), text.trim());
+    s.errors.splice(errorsBefore); // わざと返した 500 と、そのエラーの console.error
+  });
+  await finish(s, "実行中の切り替え");
 }
 
 // ---- 設定画面: AI の切り替え・キーの保存・モデルの手入力・全消去  採点は Claude で通す
@@ -348,6 +432,10 @@ const shotList = [];
       `${v.label} / ${v.placeholder} / key=${v.key.length} / warn=${v.warn}`);
     await p.selectOption(`${F} select[name="model"]`, "__other");
     check("設定: 「その他」を選ぶとモデル名の欄が出る", (await formView(p)).customShown);
+    await p.fill(`${F} input[name="key"]`, KEYS.openai);
+    await p.click(`${F} button[type=submit]`);
+    const empty = await p.evaluate(() => ({ err: document.querySelector("#status").classList.contains("error"), text: document.querySelector("#status").textContent, ai: sessionStorage.getItem("mc.provider"), key: sessionStorage.getItem("mc.key.openai") }));
+    check("設定: 「その他」でモデル名が空なら保存しない", empty.err && /モデル名を入れて/.test(empty.text) && empty.ai === "gemini" && empty.key === null, JSON.stringify(empty));
     await saveSettings(s, "ja", "openai", { model: "gpt-e2e-typed-model" });
 
     await p.selectOption(`${F} select[name="provider"]`, "gemini");
@@ -370,6 +458,17 @@ const shotList = [];
     await prepare(s, "設定 OpenAI", { name: "山本 太郎", org: "サンプル商事", goal: "予算の判断をもらう" });
     const typed = s.calls.slice(before);
     check("設定: 手入力のモデル名で送られる", typed.length > 0 && typed.every((c) => c.provider === "openai" && c.model === "gpt-e2e-typed-model"), typed.map((c) => c.model).join(" "));
+
+    await p.click('.tabs button[data-tab="settings"]');
+    await p.selectOption(`${F} select[name="provider"]`, "anthropic");
+    await p.fill(`${F} input[name="key"]`, KEYS.gemini);
+    await p.click(`${F} button[type=submit]`);
+    const other = await p.evaluate(() => ({ err: document.querySelector("#status").classList.contains("error"), text: document.querySelector("#status").textContent, ai: sessionStorage.getItem("mc.provider"), key: sessionStorage.getItem("mc.key.anthropic") }));
+    check("設定: Claude を選んだまま Gemini のキーを貼ると保存しない", other.err && /Gemini の API キーのようです/.test(other.text) && other.ai === "openai" && other.key === null, JSON.stringify(other));
+    await p.fill(`${F} input[name="key"]`, `export ANTHROPIC_API_KEY="${KEYS.anthropic}"`);
+    await p.click(`${F} button[type=submit]`);
+    const wrapped = await p.evaluate(() => ({ err: document.querySelector("#status").classList.contains("error"), key: sessionStorage.getItem("mc.key.anthropic"), field: document.querySelector('#settings-form input[name="key"]').value }));
+    check("設定: 変数名と引用符つきで貼ったキーは、キーの部分だけを保存する", !wrapped.err && wrapped.key === KEYS.anthropic && wrapped.field === KEYS.anthropic, JSON.stringify({ err: wrapped.err, key: wrapped.key === KEYS.anthropic, field: wrapped.field === KEYS.anthropic }));
 
     await saveSettings(s, "ja", "anthropic");
     await review(s, "ja 商談 (Claude)", {

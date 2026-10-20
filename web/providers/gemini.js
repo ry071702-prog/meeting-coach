@@ -5,6 +5,7 @@ import { ApiError, EmptyAnswerError, RefusalError, makeAskJSON, nonEmpty } from 
 export const id = "gemini";
 export const label = "Gemini";
 export const keyPlaceholder = "AIza...";
+export const keyPattern = /^AIza/;
 export const keyUrl = "https://aistudio.google.com/apikey";
 // The fictional examples pass end to end against the real API, but re-scoring one moved it a band:
 // 3 examples x 3 runs on 2026-10-15, ja-1on1-plain scored S once and A twice

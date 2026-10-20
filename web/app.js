@@ -1,6 +1,6 @@
 import { marked } from "https://cdn.jsdelivr.net/npm/marked@18.1.0/+esm";
 import DOMPurify from "https://cdn.jsdelivr.net/npm/dompurify@3.4.16/+esm";
-import { PROVIDERS, DEFAULT_PROVIDER, connect, describeError } from "./providers/index.js";
+import { PROVIDERS, DEFAULT_PROVIDER, connect, describeError, keyOwner, pastedKey, sourcesMarkdown } from "./providers/index.js";
 import { STRINGS } from "./i18n.js";
 import { boot, call, refs, writeInput, forget } from "./py.js";
 import * as P from "./prompts.js";
@@ -66,6 +66,16 @@ function md(el, text) {
   el.hidden = false;
 }
 
+/**
+ * The plan, then as links any page the search cited that the plan did not list itself (OpenAI's and
+ * Anthropic's web search docs ask that cited sources be shown to the user). Parsed apart from the plan,
+ * so an unclosed fence or comment in the reply cannot swallow the list.
+ */
+function showPlan(el, { text, sources }) {
+  el.innerHTML = safeHTML(text) + safeHTML(sourcesMarkdown(text, sources, t("p_sources")));
+  el.hidden = false;
+}
+
 /** Turn a {"error": ...} from the Python side into an exception with a readable message. */
 function check(r) {
   if (r && typeof r === "object" && !Array.isArray(r) && r.error) throw new Error(`${t("e_py")} ${r.error}`);
@@ -78,9 +88,10 @@ function client() {
   return { ...connect(settings.provider, settings.key), model: settings.model };
 }
 
-async function busy(button, fn) {
+/** @param id the AI the run was started with, so an error names it even if Settings changed mid-run */
+async function busy(button, fn, id = settings.provider) {
   button.disabled = true;
-  try { await fn(); } catch (e) { console.error(e); status(`${t("err")}: ${describeError(e, t)}`, true); } finally { button.disabled = false; }
+  try { await fn(); } catch (e) { console.error(e); status(`${t("err")}: ${describeError(e, (k) => t(k, id))}`, true); } finally { button.disabled = false; }
 }
 
 const config = () => JSON.parse(refs["config.default.json"]);
@@ -138,7 +149,7 @@ async function runPrepare(e) {
       tools: c.prepTools(budget.person + (kind.meeting_type === "external" ? budget.company : 0)),
       effort: "high",
     });
-    md($("#prep-out"), plan.text);
+    showPlan($("#prep-out"), plan);
     status(t("p_extracting"));
     const ex = await c.askJSON({
       model: c.model, system: P.prepExtractSystem, schema: P.prepSchema, effort: "low", maxTokens: 4000,
@@ -153,7 +164,7 @@ async function runPrepare(e) {
     check(saved);
     const tokens = plan.usage.input + plan.usage.output + ex.usage.input + ex.usage.output;
     status(`${t("p_saved")} (${saved.id})  ${t("p_saved_hint")}  ${t("r_tokens")}: ${tokens.toLocaleString()}`);
-  });
+  }, c.provider.id);
 }
 
 // ---------------------------------------------------------------- review
@@ -223,7 +234,7 @@ async function runAssign(e) {
     showLoadInfo();
     await buildIntake();
     status(t("r_found"));
-  });
+  }, c.provider.id);
 }
 
 function field(labelKey, control) {
@@ -387,7 +398,7 @@ async function runReview(e) {
     try { renderReview(scored.result, report.text, judgement, tr, meta.me); }
     catch (e) { console.error(e); status(`${t("r_saved")}  ${t("err")}: ${describeError(e, t)}`, true); return; }
     status(`${t("r_saved")}  ${t("r_tokens")}: ${(usage.input + usage.output).toLocaleString()}`);
-  });
+  }, c.provider.id);
 }
 
 const labelsFor = () => JSON.parse(refs[`scripts/locales/${settings.lang}.json`]).labels;
@@ -558,10 +569,15 @@ function saveSettings(e) {
   const f = e.target.elements;
   const id = f.provider.value;
   const model = f.model.value === OTHER_MODEL ? f.model_custom.value.trim() : f.model.value;
+  if (!model) { status(t("s_model_empty"), true); f.model_custom.focus(); return; }
+  // a key that plainly belongs to another AI would be sent to the wrong company
+  const key = pastedKey(f.key.value);
+  const owner = keyOwner(key);
+  if (owner && owner !== id) { status(t("s_key_other", id).replaceAll("{other}", PROVIDERS[owner].label), true); f.key.focus(); return; }
   settings.provider = id;
-  settings.keys[id] = f.key.value.trim();
+  settings.keys[id] = key;
   settings.remember[id] = f.remember.checked;
-  settings.models[id] = model || PROVIDERS[id].defaultModel;
+  settings.models[id] = model;
   Object.assign(settings, { lang: f.lang.value, org: f.org.value });
   store.set("mc.provider", id, true);
   store.set(`mc.key.${id}`, settings.keys[id], settings.remember[id]);

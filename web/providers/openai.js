@@ -1,10 +1,11 @@
 // OpenAI, called with fetch straight from the browser with the user's own key (Responses API).
 // Nothing passes through any server other than OpenAI's.
-import { ApiError, RefusalError, makeAskJSON, nonEmpty } from "./common.js";
+import { ApiError, RefusalError, citedSources, makeAskJSON, nonEmpty } from "./common.js";
 
 export const id = "openai";
 export const label = "OpenAI";
 export const keyPlaceholder = "sk-...";
+export const keyPattern = /^sk-(?!ant-)/; // sk-proj-, sk-svcacct- and older sk- keys; sk-ant- is Anthropic's
 export const keyUrl = "https://platform.openai.com/api-keys";
 export const status = "untested"; // written from the API reference; never run against the real API
 export const models = [
@@ -38,7 +39,7 @@ async function post(client, body) {
 /**
  * One request. `maxTokens` is not sent: reasoning shares the output cap, the reference advises leaving
  * at least 25,000 tokens for it, and a fixed number would be rejected by a typed-in model with a lower cap.
- * @returns {Promise<{message: object, text: string, usage: {input: number, output: number}}>}
+ * @returns {Promise<{message: object, text: string, usage: {input: number, output: number}, sources: {url: string, title: string}[]}>}
  */
 export async function ask(client, { model, system, messages, tools, schema, effort = "high" }) {
   const resp = await post(client, {
@@ -61,8 +62,11 @@ export async function ask(client, { model, system, messages, tools, schema, effo
   const parts = (resp.output ?? []).filter((o) => o.type === "message").flatMap((o) => o.content ?? []);
   const refusal = parts.find((p) => p.type === "refusal");
   if (refusal) throw new RefusalError(refusal.refusal || "");
-  const text = parts.filter((p) => p.type === "output_text").map((p) => p.text).join("");
-  return nonEmpty({ message: resp, text, usage });
+  const texts = parts.filter((p) => p.type === "output_text");
+  const text = texts.map((p) => p.text).join("");
+  // the cited pages, so the app can show any the text does not link (the web search guide asks for visible, clickable citations)
+  const sources = citedSources(texts.flatMap((p) => p.annotations ?? []).filter((a) => a.type === "url_citation"));
+  return nonEmpty({ message: resp, text, usage, sources });
 }
 
 /** JSON that matches `schema`; falls back to JSON in plain text if the API refuses the schema. */

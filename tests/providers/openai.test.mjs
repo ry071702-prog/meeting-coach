@@ -46,6 +46,18 @@ test("joins the message text and skips reasoning and search items", async () => 
   assert.deepEqual(r.usage, { input: 100, output: 50 }); // output_tokens already includes reasoning
 });
 
+test("returns the pages cited by url_citation annotations, each once", async () => {
+  const reply = answer("See the profile.");
+  reply.json.output[2].content[0].annotations = [
+    { type: "url_citation", start_index: 0, end_index: 7, url: "https://a.example/profile", title: "Profile" },
+    { type: "file_citation", file_id: "file_1" },
+    { type: "url_citation", start_index: 8, end_index: 15, url: "https://a.example/profile", title: "Profile" },
+  ];
+  const r = await openai.ask(client(fakeFetch(reply)), opts);
+  assert.deepEqual(r.sources, [{ url: "https://a.example/profile", title: "Profile" }]);
+  assert.deepEqual((await openai.ask(client(fakeFetch(answer("Hi"))), opts)).sources, []);
+});
+
 test("an answer with only reasoning and search items is an empty answer", async () => {
   const output = answer("x").json.output.slice(0, 2);
   const f = fakeFetch({ json: { status: "completed", output, usage: { input_tokens: 100, output_tokens: 50 } } });
@@ -108,4 +120,9 @@ test("prepTools asks for web search", () => {
 
 test("the default model is in the list", () => {
   assert.ok(openai.models.some((m) => m.id === openai.defaultModel));
+});
+
+test("keyPattern takes OpenAI's key formats but not Anthropic's or Google's", () => {
+  for (const k of ["sk-proj-abc", "sk-svcacct-abc", "sk-abc123"]) assert.ok(openai.keyPattern.test(k), k);
+  for (const k of ["sk-ant-api03-abc", "AIzaSyabc", ""]) assert.ok(!openai.keyPattern.test(k), k);
 });

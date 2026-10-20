@@ -194,7 +194,7 @@ export function prepSystem(refs, orgPack, budget, webSearch = true) {
     INJECTION,
     webSearch
       ? `Web search budget: at most ${budget.person} searches about the person and ${budget.company} about their company. Fetch a page before using anything from it; use only what the page itself says.`
-      : "You cannot search the web here; you can only read pages by URL. Research only from the profile the user pasted and the URLs written in it or in the P1 answers, and do not guess other URLs. Where the steps below say to search, skip that step and do not write search results. Use only what a page itself says; if a page could not be read, say so and do not cite it. In the plan, say that the research covered only those pages.",
+      : "You cannot search the web here; you can only read pages by URL. Research only from the profile the user pasted and the URLs written in it or in the P1 answers, and do not guess other URLs. Where the steps below say to search, skip that step and do not write search results. Use only what a page itself says; if a page could not be read, say so and do not cite it. Do not claim anything you did not read in those pages or the user's answers, such as how common the name is or what is or is not on the web about them; where they say nothing, write only that the given material did not cover it, also under Not found / left out. In the plan, say that the research covered only those pages.",
     between(refs["SKILL.md"], "## Prepare (before the meeting)", "## Review (after the meeting)"),
     refs["references/prepare/research.md"],
     refs["references/prepare/question-guide.md"],

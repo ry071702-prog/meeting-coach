@@ -105,7 +105,7 @@ AI が決めるのは、観点ごとの **水準 (0〜4) と根拠の引用だ�
 ## 開発
 ```bash
 python3 -m unittest discover tests
-node --test 'tests/providers/*.test.mjs'   # Web 版の AI の呼び出し (Node 22 以上)
+node --test 'tests/providers/*.test.mjs'   # Web 版の AI の呼び出し (Node 22.15 以上)
 bash tests/e2e/run.sh                      # Web 版の通し確認  AI の API はモック (Docker が必要)
 ```
 `examples/` の文字起こしはすべて架空です  実際の会議をこのリポジトリに入れないでください

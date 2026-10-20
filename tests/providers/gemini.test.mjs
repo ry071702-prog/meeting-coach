@@ -113,3 +113,8 @@ test("the prepare step reads the given pages but does not search (Google Search 
 test("the default model is one of the listed models", () => {
   assert.ok(gemini.models.some((m) => m.id === gemini.defaultModel));
 });
+
+test("keyPattern takes Google API keys but not OpenAI's or Anthropic's", () => {
+  assert.ok(gemini.keyPattern.test("AIzaSyabc"));
+  for (const k of ["sk-proj-abc", "sk-ant-api03-abc", ""]) assert.ok(!gemini.keyPattern.test(k), k);
+});

@@ -147,8 +147,9 @@ function reportResponse(body) {
     : `## Post-meeting report (mock)\n\n${table}\n\n### What went well\n- Opened with the decision\n\n### Try next\n1. Ask one question at a time\n`;
 }
 
-const PREP_JA = "## 準備メモ (モック)\n\n| # | 質問 | ねらい |\n|---|---|---|\n| 1 | いま一番手間なのは何ですか | 課題を知る |\n| 2 | いつまでに決めたいですか | 期日を知る |\n";
-const PREP_EN = "## Meeting plan (mock)\n\n| # | Question | Aim |\n|---|---|---|\n| 1 | What takes the most time today? | Learn the pain |\n| 2 | When do you need to decide? | Learn the deadline |\n";
+const PREP_JA = "## 準備メモ (モック)\n\n| # | 質問 | ねらい |\n|---|---|---|\n| 1 | いま一番手間なのは何ですか | 課題を知る |\n| 2 | いつまでに決めたいですか | 期日を知る |\n\n### 出典\n1. モックの会社ページ — https://example.com/mock-company\n";
+const PREP_EN = "## Meeting plan (mock)\n\n| # | Question | Aim |\n|---|---|---|\n| 1 | What takes the most time today? | Learn the pain |\n| 2 | When do you need to decide? | Learn the deadline |\n\n### Sources\n1. Mock company page — https://example.com/mock-company\n\n```\n";
+// en ends in a fence it never closes, as a model's reply can: the pages the app adds after it must still be links
 
 /** 1回の呼び出し (normalize 済み) を分類する */
 export function classify(body) {
@@ -161,14 +162,19 @@ export function classify(body) {
   return "unknown";
 }
 
-/** 本文テキストを、その会社の応答の形に包む */
-function wrap(provider, text, model) {
+/** 準備の検索で読んだことにするページ  題名の崩れた括弧と改行は、リンクの書き方を壊さないかを見るため */
+export const CITED = { url: "https://example.com/mock-profile", title: "Mock profile ](x) [example\n\n# not a heading" };
+/** 計画文が自分で出典に挙げたページ  検索の注釈にも入るが、画面で2回目は出さない */
+export const LISTED = { url: "https://example.com/mock-company?utm_source=openai", title: "Mock company page" };
+
+/** 本文テキストを、その会社の応答の形に包む  cites はその会社の形の出典の注釈にする (Gemini は URL を読むだけなので無し) */
+function wrap(provider, text, model, cites = []) {
   if (provider === "openai") {
     return {
       id: `resp_mock_${Math.random().toString(36).slice(2, 10)}`, object: "response", status: "completed", model,
       output: [
         { type: "reasoning", id: "rs_mock", summary: [] },
-        { type: "message", id: "msg_mock", role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: [] }] },
+        { type: "message", id: "msg_mock", role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: cites.map((c) => ({ type: "url_citation", start_index: 0, end_index: 8, ...c })) }] },
       ],
       usage: { input_tokens: 1200, output_tokens: 300 },
     };
@@ -181,7 +187,8 @@ function wrap(provider, text, model) {
   }
   return {
     id: `msg_mock_${Math.random().toString(36).slice(2, 10)}`, type: "message", role: "assistant", model,
-    content: [{ type: "text", text }], stop_reason: "end_turn", stop_sequence: null,
+    content: [{ type: "text", text, ...(cites.length ? { citations: cites.map((c) => ({ type: "web_search_result_location", cited_text: "mock", encrypted_index: "mock", ...c })) } : {}) }],
+    stop_reason: "end_turn", stop_sequence: null,
     usage: { input_tokens: 1200, output_tokens: 300 },
   };
 }
@@ -203,5 +210,5 @@ export function respond(provider, raw, { labelled = "" } = {}) {
       intents: ja ? ["課題を知る", "期日を知る"] : ["Learn the pain", "Learn the deadline"], focus_action_ids: [],
     });
   } else text = "{}";
-  return { kind, message: wrap(provider, text, raw.model) };
+  return { kind, message: wrap(provider, text, raw.model, kind === "prep_plan" ? [CITED, LISTED, CITED] : []) };
 }

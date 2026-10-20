@@ -1,11 +1,12 @@
 // Claude (Anthropic), straight from the browser with the user's own key.
 // Nothing passes through any server other than Anthropic's.
 import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.132.1/+esm";
-import { RefusalError, makeAskJSON, nonEmpty } from "./common.js";
+import { RefusalError, citedSources, makeAskJSON, nonEmpty } from "./common.js";
 
 export const id = "anthropic";
 export const label = "Claude";
 export const keyPlaceholder = "sk-ant-...";
+export const keyPattern = /^sk-ant-/; // how this company's keys start, to catch a key pasted under the wrong AI
 export const keyUrl = "https://platform.claude.com/settings/keys";
 export const status = "untested"; // run only against a mock so far, never the real API
 export const models = [
@@ -23,7 +24,7 @@ const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
 /**
  * One request, with the server-side refusal fallback, pause_turn resumption and usage totals.
- * @returns {Promise<{message: object, text: string, usage: {input: number, output: number}}>}
+ * @returns {Promise<{message: object, text: string, usage: {input: number, output: number}, sources: {url: string, title: string}[]}>}
  */
 export async function ask(client, { model, system, messages, tools, schema, effort = "high", maxTokens = 16000 }) {
   const base = {
@@ -36,6 +37,7 @@ export async function ask(client, { model, system, messages, tools, schema, effo
   const usage = { input: 0, output: 0 };
   let convo = [...messages];
   let useFallback = true;
+  let paused = []; // text written before a pause_turn; the continued reply carries on after it
   for (let turn = 0; turn < 8; turn++) {
     let resp;
     try {
@@ -60,16 +62,21 @@ export async function ask(client, { model, system, messages, tools, schema, effo
       // cut off mid-answer: retry once with twice the room instead of returning a broken result
       base.max_tokens = Math.min(base.max_tokens * 2, 32000);
       convo = [...messages];
+      paused = [];
       continue;
     }
     if (resp.stop_reason === "max_tokens") throw new Error("The answer was too long and got cut off.");
     if (resp.stop_reason === "pause_turn") {
       // long server-tool turn: send the partial turn back so the model continues
       convo = [...convo, { role: "assistant", content: resp.content }];
+      paused.push(...resp.content.filter((b) => b.type === "text"));
       continue;
     }
-    const text = resp.content.filter((b) => b.type === "text").map((b) => b.text).join("");
-    return nonEmpty({ message: resp, text, usage });
+    const texts = [...paused, ...resp.content.filter((b) => b.type === "text")];
+    const text = texts.map((b) => b.text).join("");
+    // the pages search results were cited from; web_fetch citations have no URL and drop out
+    const sources = citedSources(texts.flatMap((b) => b.citations ?? []));
+    return nonEmpty({ message: resp, text, usage, sources });
   }
   throw new Error("The model kept pausing; try again.");
 }
